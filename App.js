@@ -1,7 +1,8 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { useState, useEffect } from "react";
+import { Button, StyleSheet, Text, TextInput, View, Alert } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
 
 export default function App() {
   const [region, setRegion] = useState({
@@ -10,9 +11,24 @@ export default function App() {
     latitudeDelta: 0.0322,
     longitudeDelta: 0.0221,
   });
+  const [location, setLocation] = useState(null); // State where location is saved
   const [address, setAddress] = useState("");
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("No permission to get location");
+        return;
+      }
+      // Get location
+      const location = await Location.getCurrentPositionAsync({});
+      setLocation(location.coords);
+      // console.log(location.coords);
+    })();
+  }, []);
 
   const apikey = process.env.EXPO_PUBLIC_API_KEY;
 
@@ -33,13 +49,19 @@ export default function App() {
     <View style={styles.container}>
       <TextInput
         style={styles.input}
+        placeholder="Syötä osoite..."
         onChangeText={(address) => setAddress(address)}
         value={address}
       ></TextInput>
       <View style={styles.button}>
         <Button onPress={handleAddress} title="Show"></Button>
       </View>
-      <MapView style={styles.map} region={region}>
+      <MapView
+        style={styles.map}
+        region={region}
+        showsUserLocation={true}
+        followsUserLocation={true}
+      >
         <Marker
           coordinate={{
             latitude: Number(lat),
