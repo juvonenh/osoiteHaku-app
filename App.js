@@ -5,16 +5,14 @@ import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 
 export default function App() {
-  const [region, setRegion] = useState({
+  const initial = {
     latitude: 60.200692,
     longitude: 24.934302,
     latitudeDelta: 0.0322,
     longitudeDelta: 0.0221,
-  });
-  const [location, setLocation] = useState(null); // State where location is saved
+  };
+  const [region, setRegion] = useState(initial);
   const [address, setAddress] = useState("");
-  const [lat, setLat] = useState("");
-  const [lon, setLon] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -25,8 +23,11 @@ export default function App() {
       }
       // Get location
       const location = await Location.getCurrentPositionAsync({});
-      setLocation(location.coords);
-      // console.log(location.coords);
+      setRegion({
+        ...region,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
     })();
   }, []);
 
@@ -38,8 +39,7 @@ export default function App() {
       const response = await fetch(url);
       const json = await response.json();
       // console.log(json);
-      setLat(json[0].lat);
-      setLon(json[0].lon);
+      setRegion({ ...region, latitude: json[0].lat, longitude: json[0].lon });
     } catch (error) {
       Alert.alert("Error", error);
     }
@@ -56,19 +56,8 @@ export default function App() {
       <View style={styles.button}>
         <Button onPress={handleAddress} title="Show"></Button>
       </View>
-      <MapView
-        style={styles.map}
-        region={region}
-        showsUserLocation={true}
-        followsUserLocation={true}
-      >
-        <Marker
-          coordinate={{
-            latitude: Number(lat),
-            longitude: Number(lon),
-          }}
-          // title={address}
-        />
+      <MapView style={styles.map} region={region}>
+        <Marker coordinate={region} />
       </MapView>
     </View>
   );
