@@ -15,20 +15,27 @@ export default function App() {
   const [address, setAddress] = useState("");
 
   useEffect(() => {
-    (async () => {
+    // Effect-funktio ei voi olla async?
+    const fetchLocation = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         Alert.alert("No permission to get location");
         return;
+      } else {
+        try {
+          // Get location
+          const location = await Location.getCurrentPositionAsync({});
+          setRegion({
+            ...region,
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+        } catch (error) {
+          console.log(error.message);
+        }
       }
-      // Get location
-      const location = await Location.getCurrentPositionAsync({});
-      setRegion({
-        ...region,
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-    })();
+    };
+    fetchLocation();
   }, []);
 
   const apikey = process.env.EXPO_PUBLIC_API_KEY;
@@ -39,7 +46,9 @@ export default function App() {
       const response = await fetch(url);
       const json = await response.json();
       // console.log(json);
-      setRegion({ ...region, latitude: json[0].lat, longitude: json[0].lon });
+      const lat = Number(json[0].lat);
+      const lon = Number(json[0].lon);
+      setRegion({ ...region, latitude: lat, longitude: lon });
     } catch (error) {
       Alert.alert("Error", error);
     }
